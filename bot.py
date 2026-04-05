@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8727891862:AAGVnDwGUMyUBqAm4f0vqIiL3yZOCQmKW_Y")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 db = Database("leaderboard.db")
 
 # active_games[chat_id] = CheckersGame
@@ -39,13 +39,13 @@ def board_to_keyboard(game: CheckersGame, selected: tuple = None) -> InlineKeybo
 
             # Cell content
             if cell == WHITE:
-                text = "⚪"
+                text = "🟡"  # жёлтая шашка
             elif cell == BLACK:
-                text = "⚫"
+                text = "🟤"  # коричневая шашка
             elif cell == WHITE_KING:
-                text = "👑"
+                text = "🌟"  # жёлтая дамка
             elif cell == BLACK_KING:
-                text = "🔱"
+                text = "💫"  # коричневая дамка
             elif selected and (row, col) == selected:
                 text = "✳️"
             elif (row, col) in valid_moves:
@@ -73,13 +73,13 @@ def game_status_text(game: CheckersGame, chat_id: int) -> str:
     b_name = game.black_name
     w_name = game.white_name
     current = b_name if game.current_turn == BLACK else w_name
-    symbol = "⚫" if game.current_turn == BLACK else "⚪"
+    symbol = "🟤" if game.current_turn == BLACK else "🟡"
     b_count = sum(1 for r in game.board for c in r if c in (BLACK, BLACK_KING))
     w_count = sum(1 for r in game.board for c in r if c in (WHITE, WHITE_KING))
     return (
         f"♟ *Шашки*\n"
-        f"⚫ {b_name}: {b_count} шашек\n"
-        f"⚪ {w_name}: {w_count} шашек\n\n"
+        f"🟤 {b_name}: {b_count} шашек\n"
+        f"🟡 {w_name}: {w_count} шашек\n\n"
         f"Ход: {symbol} *{current}*"
     )
 
@@ -124,6 +124,7 @@ async def play_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"⚔️ *{user.first_name}* бросает вызов!\n\n"
         f"Кто хочет сыграть в шашки? Напиши /accept чтобы принять вызов!\n"
+
         f"_(Вызов действителен 5 минут)_",
         parse_mode="Markdown"
     )
@@ -183,7 +184,7 @@ async def accept_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     msg = await update.message.reply_text(
         f"🎮 *Игра началась!*\n\n"
-        f"⚫ {ch['challenger_name']} vs ⚪ {user.first_name}\n\n"
+        f"🟤 {ch['challenger_name']} vs 🟡 {user.first_name}\n\n"
         f"{game_status_text(game, chat_id)}",
         parse_mode="Markdown",
         reply_markup=board_to_keyboard(game)
@@ -227,7 +228,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         b_count = sum(1 for r in game.board for c in r if c in (BLACK, BLACK_KING))
         w_count = sum(1 for r in game.board for c in r if c in (WHITE, WHITE_KING))
         await query.answer(
-            f"⚫ {game.black_name}: {b_count}\n⚪ {game.white_name}: {w_count}",
+            f"🟤 {game.black_name}: {b_count}\n🟡 {game.white_name}: {w_count}",
             show_alert=True
         )
         return
@@ -241,10 +242,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check it's the player's turn
     if game.current_turn == BLACK and user.id != game.black_id:
-        await query.answer("Сейчас ход ⚫!", show_alert=True)
+        await query.answer("Сейчас ход 🟤!", show_alert=True)
         return
     if game.current_turn == WHITE and user.id != game.white_id:
-        await query.answer("Сейчас ход ⚪!", show_alert=True)
+        await query.answer("Сейчас ход 🟡!", show_alert=True)
         return
 
     cell = game.board[row][col]
@@ -311,7 +312,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.record_loss(l_id, l_name)
         del active_games[chat_id]
 
-        symbol = "⚫" if winner == BLACK else "⚪"
+        symbol = "🟤" if winner == BLACK else "🟡"
         await query.edit_message_text(
             f"🏆 *{symbol} {w_name} победил!*\n\n"
             f"Партия завершена! Напиши /leaderboard чтобы посмотреть таблицу лидеров.",
@@ -380,8 +381,10 @@ async def resign_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def rules_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📜 *Правила шашек*\n\n"
+        "🟤 Коричневые ходят первыми (вниз)\n"
+        "🟡 Жёлтые ходят вторыми (вверх)\n\n"
         "• Обычные шашки ходят по диагонали вперёд на 1 клетку\n"
-        "• Дамки (👑/🔱) ходят по диагонали в любом направлении\n"
+        "• Дамки (💫/🌟) ходят по диагонали в любом направлении\n"
         "• Бить нужно обязательно, если есть такая возможность\n"
         "• При достижении последнего ряда шашка становится дамкой\n"
         "• Побеждает тот, кто съел все шашки соперника или заблокировал их\n\n"
