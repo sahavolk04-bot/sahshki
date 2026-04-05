@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8727891862:AAGVnDwGUMyUBqAm4f0vqIiL3yZOCQmKW_Y")
 db = Database("leaderboard.db")
 
 # active_games[chat_id] = CheckersGame
